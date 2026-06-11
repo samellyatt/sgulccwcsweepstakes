@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>World Cup 2026 Sweepstake — League Table</title>
+<style>
+  :root{
+    --pitch-deep:#082c1f;
+    --card:#0f4733;
+    --chalk:#f5f2e8;
+    --gold:#e8b23a;
+    --gold-deep:#c4912a;
+    --weakdot:#9ecbb4;
+    --line:rgba(245,242,232,.18);
+    --out:rgba(245,242,232,.35);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--pitch-deep);
+    background-image:repeating-linear-gradient(90deg, rgba(255,255,255,.018) 0 90px, rgba(0,0,0,.05) 90px 180px);
+    color:var(--chalk);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    min-height:100vh;
+    padding:0 14px 80px;
+  }
+  .wrap{max-width:760px;margin:0 auto}
+
+  header{text-align:center;padding:38px 0 24px;border-bottom:2px solid var(--line);margin-bottom:24px}
+  .eyebrow{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:12px}
+  h1{font-size:clamp(30px,6vw,48px);font-weight:800;line-height:1.04;text-transform:uppercase}
+  h1 .thin{font-weight:300}
+  .sub{margin-top:10px;font-size:13.5px;color:rgba(245,242,232,.6)}
+  .status-line{margin-top:8px;font-size:12px;color:var(--gold);min-height:16px}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 18px;margin-bottom:22px}
+  .panel h2{
+    font-size:12px;letter-spacing:.26em;text-transform:uppercase;color:var(--gold);
+    font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:10px;
+  }
+  .panel h2::after{content:"";flex:1;height:1px;background:var(--line)}
+
+  /* League table */
+  .lt-row{
+    display:flex;align-items:center;gap:12px;
+    padding:13px 12px;border-radius:10px;cursor:pointer;
+    border:1px solid transparent;
+    transition:background .15s,border-color .15s;
+  }
+  .lt-row:hover{background:rgba(0,0,0,.18)}
+  .lt-row.open{background:rgba(0,0,0,.22);border-color:var(--line)}
+  .lt-pos{
+    width:26px;text-align:center;font-weight:800;font-size:15px;
+    color:rgba(245,242,232,.5);flex-shrink:0;
+  }
+  .lt-row:nth-child(1) .lt-pos{color:var(--gold)}
+  .lt-name{font-weight:700;font-size:16px;flex:1;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .lt-alive{font-size:11px;color:rgba(245,242,232,.5);font-weight:600}
+  .lt-pts{
+    font-weight:800;font-size:18px;color:var(--gold);
+    min-width:46px;text-align:right;font-variant-numeric:tabular-nums;
+  }
+  .lt-pts small{font-size:10px;color:rgba(245,242,232,.5);font-weight:600;letter-spacing:.08em}
+  .lt-teams{
+    display:none;padding:4px 12px 12px 50px;
+  }
+  .lt-teams.show{display:block}
+  .tm{
+    display:flex;align-items:center;gap:9px;padding:5px 0;font-size:14px;
+  }
+  .tm .flag{width:24px;text-align:center;font-size:17px}
+  .tm.dead .flag,.tm.dead .nm{opacity:.4}
+  .tm.dead .nm{text-decoration:line-through;text-decoration-color:rgba(245,242,232,.5)}
+  .tm .stage{
+    margin-left:auto;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+    font-weight:700;padding:3px 8px;border-radius:20px;
+    background:rgba(0,0,0,.3);color:rgba(245,242,232,.7);white-space:nowrap;
+  }
+  .tm .stage.champ{background:var(--gold);color:#1d1607}
+  .tm .stage.alive{color:var(--weakdot)}
+  .tm .pts{font-size:12px;color:var(--gold);font-weight:700;min-width:30px;text-align:right;font-variant-numeric:tabular-nums}
+
+  /* Update section */
+  .upd-grid{display:grid;grid-template-columns:1fr;gap:6px}
+  .upd-row{
+    display:flex;align-items:center;gap:10px;padding:7px 10px;
+    border-radius:8px;background:rgba(0,0,0,.16);font-size:14px;
+  }
+  .upd-row .flag{width:24px;text-align:center;font-size:17px}
+  .upd-row .nm{flex:1;min-width:0}
+  .upd-row .owner{font-size:11px;color:rgba(245,242,232,.45);margin-left:6px}
+  .upd-row select{
+    background:#0a3526;color:var(--chalk);border:1px solid var(--line);
+    border-radius:7px;font-size:12.5px;padding:6px 8px;font-family:inherit;
+    max-width:150px;
+  }
+  .upd-row select:focus{outline:2px solid var(--gold)}
+  .upd-row.dead .nm,.upd-row.dead .flag{opacity:.45}
+
+  .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px}
+  button{
+    font-family:inherit;border:none;border-radius:8px;cursor:pointer;
+    font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    padding:12px 22px;transition:transform .1s,background .15s;
+  }
+  button:active{transform:scale(.97)}
+  button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+  .btn-save{background:var(--gold);color:#1d1607;box-shadow:0 4px 0 var(--gold-deep)}
+  .btn-save:hover{background:#f0c156}
+  .btn-ghost{background:transparent;color:var(--chalk);border:1px solid var(--line)}
+  .btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+  .note{font-size:12px;color:rgba(245,242,232,.5);line-height:1.5;margin-top:12px}
+
+  .scoring{display:flex;flex-wrap:wrap;gap:8px;font-size:11.5px;color:rgba(245,242,232,.65)}
+  .scoring span{
+    background:rgba(0,0,0,.22);border:1px solid var(--line);
+    border-radius:20px;padding:4px 11px;letter-spacing:.04em;
+  }
+  .scoring b{color:var(--gold)}
+
+  .toggle-upd{margin-bottom:0}
+  #updateBody{display:none;margin-top:16px}
+  #updateBody.show{display:block}
+  .saving{color:var(--gold);font-size:12.5px;display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">United States · Canada · Mexico · Summer 2026</div>
+    <h1>Sweepstake<br><span class="thin">League Table</span></h1>
+    <div class="sub">11 players · 44 teams · points for every knockout stage reached</div>
+    <div class="status-line" id="statusLine">Loading latest standings…</div>
+  </header>
+
+  <section class="panel">
+    <h2>Standings</h2>
+    <div id="table"></div>
+    <div class="note">Tap a player to see their teams. Faded teams are out of the tournament.</div>
+  </section>
+
+  <section class="panel">
+    <h2>Scoring</h2>
+    <div class="scoring">
+      <span>Group exit <b>0</b></span>
+      <span>Round of 32 <b>2</b></span>
+      <span>Round of 16 <b>4</b></span>
+      <span>Quarter-final <b>7</b></span>
+      <span>Semi-final <b>10</b></span>
+      <span>Runner-up <b>13</b></span>
+      <span>Champions <b>18</b></span>
+    </div>
+    <div class="note">Each team scores for the furthest stage it reaches. A player's total is the sum across their four teams.</div>
+  </section>
+
+  <section class="panel">
+    <h2 class="toggle-upd">Update results</h2>
+    <div class="actions" style="margin-top:0">
+      <button class="btn-ghost" id="toggleUpd">Show update panel</button>
+    </div>
+    <div id="updateBody">
+      <div class="upd-grid" id="updGrid"></div>
+      <div class="actions">
+        <button class="btn-save" id="copyCodeBtn">Copy update code for GitHub</button>
+        <button class="btn-ghost" id="resetBtn">Reset dropdowns</button>
+        <span class="saving" id="saving"></span>
+      </div>
+      <div class="note">
+        <b>How updating works:</b> set each team's stage with the dropdowns (this previews the table above),
+        then hit "Copy update code". Go to your repo on GitHub → open <b>index.html</b> → tap the pencil (edit) icon →
+        select the existing RESULTS block and paste over it → Commit changes. The live page updates for everyone
+        within a minute or two.
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  EDIT RESULTS HERE — this is the only bit you ever need to touch  ║
+// ║                                                                    ║
+// ║  Change the word in quotes after each team. Valid values:          ║
+// ║   "group"      in the group stage        "group_out"  out, groups  ║
+// ║   "r32"        in the Round of 32        "r32_out"    out in R32   ║
+// ║   "r16"        in the Round of 16        "r16_out"    out in R16   ║
+// ║   "qf"         in the quarter-finals     "qf_out"     out in QF    ║
+// ║   "sf"         in the semi-finals        "sf_out"     out in SF    ║
+// ║   "final"      in the final              "runner_up"  lost final   ║
+// ║   "champ"      WORLD CHAMPIONS 🏆                                  ║
+// ╚══════════════════════════════════════════════════════════════════╝
+const RESULTS = {
+  // Alfie
+  "Croatia": "group",     "Ecuador": "group",      "Paraguay": "group",     "Sweden": "group",
+  // Bharwani
+  "Turkey": "group",      "Morocco": "group",      "Iran": "group",         "Uzbekistan": "group",
+  // Darshan
+  "England": "group",     "Japan": "group",        "Bosnia & Herzegovina": "group", "Norway": "group",
+  // Sujay
+  "Germany": "group",     "South Korea": "group",  "Tunisia": "group",      "Cape Verde": "group",
+  // Jas
+  "Senegal": "group",     "USA": "group",          "Australia": "group",    "Ivory Coast": "group",
+  // Rahul
+  "France": "group",      "Portugal": "group",     "Jordan": "group",       "South Africa": "group",
+  // Yas
+  "Brazil": "group",      "Austria": "group",      "Iraq": "group",         "Scotland": "group",
+  // The General
+  "Netherlands": "group", "Colombia": "group",     "Algeria": "group",      "Czechia": "group",
+  // Vineeth
+  "Belgium": "group",     "Switzerland": "group",  "Panama": "group",       "Egypt": "group",
+  // Sam E
+  "Mexico": "group",      "Argentina": "group",    "Qatar": "group",        "DR Congo": "group",
+  // Advait
+  "Spain": "group",       "Uruguay": "group",      "Canada": "group",       "Saudi Arabia": "group"
+};
+// ════════════════════ end of editable section ════════════════════════
+
+// ---- The draw (fixed) ----
+const PLAYERS = [
+  { name:"Alfie",       teams:[["Croatia","🇭🇷"],["Ecuador","🇪🇨"],["Paraguay","🇵🇾"],["Sweden","🇸🇪"]] },
+  { name:"Bharwani",    teams:[["Turkey","🇹🇷"],["Morocco","🇲🇦"],["Iran","🇮🇷"],["Uzbekistan","🇺🇿"]] },
+  { name:"Darshan",     teams:[["England","🏴󠁧󠁢󠁥󠁮󠁧󠁿"],["Japan","🇯🇵"],["Bosnia & Herzegovina","🇧🇦"],["Norway","🇳🇴"]] },
+  { name:"Sujay",       teams:[["Germany","🇩🇪"],["South Korea","🇰🇷"],["Tunisia","🇹🇳"],["Cape Verde","🇨🇻"]] },
+  { name:"Jas",         teams:[["Senegal","🇸🇳"],["USA","🇺🇸"],["Australia","🇦🇺"],["Ivory Coast","🇨🇮"]] },
+  { name:"Rahul",       teams:[["France","🇫🇷"],["Portugal","🇵🇹"],["Jordan","🇯🇴"],["South Africa","🇿🇦"]] },
+  { name:"Yas",         teams:[["Brazil","🇧🇷"],["Austria","🇦🇹"],["Iraq","🇮🇶"],["Scotland","🏴󠁧󠁢󠁳󠁣󠁴󠁿"]] },
+  { name:"The General", teams:[["Netherlands","🇳🇱"],["Colombia","🇨🇴"],["Algeria","🇩🇿"],["Czechia","🇨🇿"]] },
+  { name:"Vineeth",     teams:[["Belgium","🇧🇪"],["Switzerland","🇨🇭"],["Panama","🇵🇦"],["Egypt","🇪🇬"]] },
+  { name:"Sam E",       teams:[["Mexico","🇲🇽"],["Argentina","🇦🇷"],["Qatar","🇶🇦"],["DR Congo","🇨🇩"]] },
+  { name:"Advait",      teams:[["Spain","🇪🇸"],["Uruguay","🇺🇾"],["Canada","🇨🇦"],["Saudi Arabia","🇸🇦"]] }
+];
+
+// Stage definitions: value stored per team, points, label, whether still alive
+const STAGES = [
+  { id:"group",     pts:0,  label:"Group stage",        alive:true  },
+  { id:"group_out", pts:0,  label:"Out — groups",       alive:false },
+  { id:"r32",       pts:2,  label:"In R32",             alive:true  },
+  { id:"r32_out",   pts:2,  label:"Out — R32",          alive:false },
+  { id:"r16",       pts:4,  label:"In R16",             alive:true  },
+  { id:"r16_out",   pts:4,  label:"Out — R16",          alive:false },
+  { id:"qf",        pts:7,  label:"In QF",              alive:true  },
+  { id:"qf_out",    pts:7,  label:"Out — QF",           alive:false },
+  { id:"sf",        pts:10, label:"In SF",              alive:true  },
+  { id:"sf_out",    pts:10, label:"Out — SF",           alive:false },
+  { id:"final",     pts:13, label:"In the final",       alive:true  },
+  { id:"runner_up", pts:13, label:"Runner-up",          alive:false },
+  { id:"champ",     pts:18, label:"Champions 🏆",       alive:false }
+];
+const stageById = Object.fromEntries(STAGES.map(s => [s.id, s]));
+
+const STORAGE_KEY = "wc26-sweepstake-standings";
+let state = {};      // teamName -> stage id
+const openRows = new Set();
+
+function defaultState(){
+  const s = {};
+  PLAYERS.forEach(p => p.teams.forEach(t => { s[t[0]] = "group"; }));
+  return s;
+}
+
+function loadState(){
+  state = defaultState();
+  Object.keys(state).forEach(k => {
+    if (RESULTS[k] && stageById[RESULTS[k]]) state[k] = RESULTS[k];
+  });
+  const anyProgress = Object.values(state).some(v => v !== "group");
+  setStatus(anyProgress ? "Standings up to date" : "Tournament not started — all teams in the group stage");
+  render();
+}
+
+// Generates the updated RESULTS block to paste into index.html on GitHub
+function buildResultsCode(){
+  let out = "const RESULTS = {\n";
+  PLAYERS.forEach((p, pi) => {
+    out += "  // " + p.name + "\n  ";
+    out += p.teams.map(t => '"' + t[0] + '": "' + state[t[0]] + '"').join(",  ");
+    out += (pi < PLAYERS.length - 1 ? ",\n" : "\n");
+  });
+  out += "};";
+  return out;
+}
+
+function copyResultsCode(){
+  const code = buildResultsCode();
+  const done = () => {
+    const saving = document.getElementById("saving");
+    saving.style.display = "inline";
+    saving.textContent = "Copied! Paste over the RESULTS block in index.html on GitHub";
+    setTimeout(() => { saving.style.display = "none"; }, 6000);
+  };
+  navigator.clipboard.writeText(code).then(done).catch(() => {
+    const ta = document.createElement("textarea");
+    ta.value = code;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+    done();
+  });
+}
+
+function setStatus(msg){ document.getElementById("statusLine").textContent = msg; }
+
+function playerScore(p){
+  return p.teams.reduce((sum, t) => sum + stageById[state[t[0]]].pts, 0);
+}
+function playerAliveCount(p){
+  return p.teams.filter(t => stageById[state[t[0]]].alive).length;
+}
+
+function render(){
+  // League table
+  const table = document.getElementById("table");
+  table.innerHTML = "";
+  const ranked = PLAYERS.slice().sort((a, b) =>
+    playerScore(b) - playerScore(a) || playerAliveCount(b) - playerAliveCount(a) || a.name.localeCompare(b.name)
+  );
+
+  ranked.forEach((p, i) => {
+    const pts = playerScore(p);
+    const alive = playerAliveCount(p);
+    const row = document.createElement("div");
+    row.className = "lt-row" + (openRows.has(p.name) ? " open" : "");
+    row.innerHTML =
+      '<div class="lt-pos">' + (i + 1) + '</div>' +
+      '<div class="lt-name">' + escapeHtml(p.name) +
+      '<span class="lt-alive">' + alive + ' of 4 alive</span></div>' +
+      '<div class="lt-pts">' + pts + ' <small>PTS</small></div>';
+    const teamsDiv = document.createElement("div");
+    teamsDiv.className = "lt-teams" + (openRows.has(p.name) ? " show" : "");
+    teamsDiv.innerHTML = p.teams.map(t => {
+      const st = stageById[state[t[0]]];
+      return '<div class="tm' + (st.alive ? '' : ' dead') + '">' +
+        '<span class="flag">' + t[1] + '</span>' +
+        '<span class="nm">' + escapeHtml(t[0]) + '</span>' +
+        '<span class="stage' + (state[t[0]] === "champ" ? " champ" : (st.alive ? " alive" : "")) + '">' + st.label + '</span>' +
+        '<span class="pts">' + (st.pts > 0 ? "+" + st.pts : "0") + '</span></div>';
+    }).join("");
+    row.addEventListener("click", () => {
+      if (openRows.has(p.name)) openRows.delete(p.name); else openRows.add(p.name);
+      render();
+    });
+    table.appendChild(row);
+    table.appendChild(teamsDiv);
+  });
+
+  // Update grid
+  const grid = document.getElementById("updGrid");
+  grid.innerHTML = "";
+  const allTeams = [];
+  PLAYERS.forEach(p => p.teams.forEach(t => allTeams.push({ team: t, owner: p.name })));
+  allTeams.sort((a, b) => a.team[0].localeCompare(b.team[0]));
+
+  allTeams.forEach(({ team, owner }) => {
+    const st = stageById[state[team[0]]];
+    const row = document.createElement("div");
+    row.className = "upd-row" + (st.alive ? "" : " dead");
+    const sel = document.createElement("select");
+    sel.setAttribute("aria-label", "Stage for " + team[0]);
+    STAGES.forEach(s => {
+      const o = document.createElement("option");
+      o.value = s.id; o.textContent = s.label;
+      if (s.id === state[team[0]]) o.selected = true;
+      sel.appendChild(o);
+    });
+    sel.addEventListener("change", () => { state[team[0]] = sel.value; render(); });
+    row.innerHTML = '<span class="flag">' + team[1] + '</span>' +
+      '<span class="nm">' + escapeHtml(team[0]) +
+      '<span class="owner">' + escapeHtml(owner) + '</span></span>';
+    row.appendChild(sel);
+    grid.appendChild(row);
+  });
+}
+
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+document.getElementById("toggleUpd").addEventListener("click", () => {
+  const body = document.getElementById("updateBody");
+  const showing = body.classList.toggle("show");
+  document.getElementById("toggleUpd").textContent = showing ? "Hide update panel" : "Show update panel";
+});
+
+document.getElementById("copyCodeBtn").addEventListener("click", copyResultsCode);
+
+document.getElementById("resetBtn").addEventListener("click", () => {
+  if (!confirm("Reset every dropdown back to the group stage? (This only changes the preview — the live page won't change unless you copy the code and commit it on GitHub.)")) return;
+  state = defaultState();
+  render();
+});
+
+loadState();
+</script>
+</body>
+</html>
